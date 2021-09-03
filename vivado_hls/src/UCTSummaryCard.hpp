@@ -48,8 +48,6 @@ void boostedjet(ap_uint<10> jet_seed,
 		region_t regions[NR_CNTR_REG], 
 		ap_uint<10> et_3by3[NR_CNTR_REG], 
 		ap_uint<10> jet_et[NR_SCNTR_REG], 
-		bitset<3> rEta_jet[NR_SCNTR_REG], 
-		bitset<3> rPhi_jet[NR_SCNTR_REG],
 		ap_uint<9> rIdx_boostedjet[NR_SCNTR_REG]);
 
 #endif

@@ -98,8 +98,6 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
         ap_uint<10> et_3by3_cntr[NR_CNTR_REG];
 
         ap_uint<10> et_jet_boosted[NR_SCNTR_REG];
-        bitset<3>  rEta_jet_boosted[NR_SCNTR_REG];
-        bitset<3>  rPhi_jet_boosted[NR_SCNTR_REG];
         ap_uint<9> rIdx_boostedjet[NR_SCNTR_REG];
 
         ap_uint<32> so_in_jet_boosted[64];
@@ -135,8 +133,6 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
 #pragma HLS ARRAY_RESHAPE variable=pu_sub_et_calo complete dim=0
 
 #pragma HLS ARRAY_RESHAPE variable=et_jet_boosted complete dim=0
-#pragma HLS ARRAY_RESHAPE variable=rEta_jet_boosted complete dim=0
-#pragma HLS ARRAY_RESHAPE variable=rPhi_jet_boosted complete dim=0
 #pragma HLS ARRAY_RESHAPE variable=rIdx_boostedjet complete dim=0
 
 ////////////////////////////////////////////////////////////////////////
@@ -185,7 +181,7 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
 
 ////////////////////////////////////////////////////////////
         // Prepare algorithm results
-        boostedjet(algo_config.jet_seed, centr_region_pu_sub, et_3by3_calo, et_jet_boosted, rEta_jet_boosted, rPhi_jet_boosted, rIdx_boostedjet);
+        boostedjet(algo_config.jet_seed, centr_region_pu_sub, et_3by3_calo, et_jet_boosted, rIdx_boostedjet);
 
         for (int idx = 0; idx < NR_SCNTR_REG; idx++)
         {
