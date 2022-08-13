@@ -1,5 +1,5 @@
 #include "ap_int.h"
-
+#include "hls_math.h"
 #include "PU_LUT.h"
 
 const ap_ufixed<7, 3, AP_RND, AP_SAT> pum_lut[18][26] =
@@ -44,7 +44,7 @@ const ap_ufixed<7, 3, AP_RND, AP_SAT> pum_lut[18][26] =
 
 };
 
-const ap_ufixed<7, 3, AP_RND, AP_SAT> pum_lut_cntr[18][14] =
+const float pum_lut_cntr[18][14] =
 {
 //   0     1     2     3     4     5     6      7     8     9     10    11    12    13 
 { 0.25, 0.25, 0.33, 0.36, 0.29, 0.32, 0.43,     0.45, 0.32, 0.29, 0.35, 0.31, 0.25, 0.25 },
@@ -104,7 +104,7 @@ void pu_lut_cntr(ap_uint<5> pum_bin, ap_uint<10> et[NR_CNTR_REG],
 #pragma HLS UNROLL
                 et_tmp = et[idx];
 
-                pu_tmp =  pum_lut_cntr[pum_bin][idx % 14];
+                pu_tmp = round(pum_lut_cntr[pum_bin][idx % 14]/0.5);   // add caloScaleFactor; add round;
 
                 if (et_tmp >= pu_tmp)
                         pu_sub_et[idx] = et_tmp - pu_tmp;

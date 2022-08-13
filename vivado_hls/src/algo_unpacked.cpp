@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <hls_math.h>
 
 #include <iostream>
 #include <fstream>
@@ -72,23 +73,17 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
                         exit(1);
                 }
                 int link_idx = iRegion / NRegionsPerLink;
-                int bitLo1 = ((iRegion - link_idx * NRegionsPerLink) % NRegionsPerLink) * 16 + 8;
-                int bitHi1 = bitLo1 + 1;
-                int bitLo2 = bitHi1 + 1;
-                int bitHi2 = bitLo2 + 1;
-                int bitLo3 = bitHi2 + 1;
-                int bitHi3 = bitLo3;
-                int bitLo4 = bitHi3 + 1;
-                int bitHi4 = bitLo4;
-                int bitLo5 = bitHi4 + 1;
-                int bitHi5 = bitLo5 + 9;
-                centr_region[iRegion].rloc_eta = link_in[link_idx].range(bitHi1, bitLo1);   // 2 bits
-                centr_region[iRegion].rloc_phi = link_in[link_idx].range(bitHi2, bitLo2);   // 2 bits
-                centr_region[iRegion].eg_veto = link_in[link_idx].range(bitHi3, bitLo3);   // 1 bit
-                centr_region[iRegion].tau_veto = link_in[link_idx].range(bitHi4, bitLo4);   // 1 bit
-                centr_region[iRegion].et = link_in[link_idx].range(bitHi5, bitLo5);   // 10 bits
-                if((double)centr_region[iRegion].et > 0) cout << "Calo region " << " ET: " << centr_region[iRegion].et << " Eta: " << centr_region[iRegion].rloc_eta << " Phi: " << centr_region[iRegion].rloc_phi << " EG veto: " << centr_region[iRegion].eg_veto << " Tau veto: " << centr_region[iRegion].tau_veto << endl;
+                int bitLo = ((iRegion - link_idx * NRegionsPerLink) % NRegionsPerLink) * 16 + 8;
+                int bitHi = bitLo + 15;
+                uint16_t region_raw = link_in[link_idx].range(bitHi, bitLo);
+                centr_region[iRegion].et = (region_raw & 0x3FF >> 0);   // 10 bits
+                centr_region[iRegion].eg_veto = (region_raw & 0x7FF) >> 10;   // 1 bit
+                centr_region[iRegion].tau_veto = (region_raw & 0xFFF) >> 11;   // 1 bit
+                centr_region[iRegion].rloc_phi = (region_raw & 0x3FFF) >> 12;   // 2 bit
+                centr_region[iRegion].rloc_eta = (region_raw & 0xFFFF) >> 14;   // 2 bit
+                //cout << "Calo region " << " ET: " << centr_region[iRegion].et << " Eta: " << centr_region[iRegion].rloc_eta << " Phi: " << centr_region[iRegion].rloc_phi << " EG veto: " << centr_region[iRegion].eg_veto << " Tau veto: " << centr_region[iRegion].tau_veto << endl;
         }
+        //cout<<"Got all regions"<<endl;
 
 ////////////////////////////////////////////////////////////
         // Objets from input
@@ -198,48 +193,49 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
         bitonicSort64(so_in_jet_boosted, so_out_jet_boosted);
 
         // Assign the algorithm outputs
-        for (int idx = 0; idx < 5; idx++)
+        for (int idx = 0; idx < 4; idx++)
         {
 #pragma HLS UNROLL
                 ap_uint<1> side, side_1;
                 ap_uint<9> idx_srt, idx_srt_1;
 
                 { // Boosted jets
-                        int bLo9 = idx*24;
-                        int bHi9 = bLo9 + 9;
-                        tmp_link_out[0].range(bHi9, bLo9) = so_out_jet_boosted[idx].range(9, 0);
-                        tmp_link_out[1].range(bHi9, bLo9) = so_out_jet_boosted[idx+5].range(9, 0);
+		  // output scheme: 4x32-bits should fine in one 10-Gbps fiber. For the format the interface document states that the current jet
+		  // collection is 8 bits phi then 8 bits in eta (7 bits position then 1 bit
+		  // for +/- eta) then 11 bits et with LSB 0.5 GeV and 5 spare bits.
+			int bLo9 = idx*32;
+			int bHi9 = bLo9 + 7;
 
-                        idx_srt = so_out_jet_boosted[idx].range(18, 10);
-                        idx_srt_1 = so_out_jet_boosted[idx+5].range(18, 10);
+			idx_srt = so_out_jet_boosted[idx].range(18, 10);
+			idx_srt_1 = so_out_jet_boosted[idx+4].range(18, 10);
+			int test1 = 0x007F & calo_coor[idx_srt].iphi + so_out_jet_boosted[idx].range(25, 19);
+			int test2 = 0x007F & calo_coor[idx_srt_1].iphi + so_out_jet_boosted[idx+4].range(25, 19);
+			tmp_link_out[0].range(bHi9, bLo9) = !signbit(test1 - 72) ? (0x007F & test1 - 0x0048) : (0x007F & test1);
+			tmp_link_out[1].range(bHi9, bLo9) = !signbit(test2 - 72) ? (0x007F & test2 - 0x0048) : (0x007F & test2);
 
-                        side = calo_coor[idx_srt].side;
-                        side_1 = calo_coor[idx_srt_1].side;
-                        int bLo10 = bHi9 + 1;
-                        int bHi10 = bLo10;
-                        tmp_link_out[0].range(bHi10, bLo10) = side;
-                        tmp_link_out[1].range(bHi10, bLo10) = side_1;
+			int bLo10 = bHi9 + 1;
+			int bHi10 = bLo10 + 6;
 
-                        int bLo11 = bHi10 + 1;
-                        int bHi11 = bLo11 + 6;
-                        tmp_link_out[0].range(bHi11, bLo11) = calo_coor[idx_srt].iphi + so_out_jet_boosted[idx].range(25, 19);
-                        tmp_link_out[1].range(bHi11, bLo11) = calo_coor[idx_srt_1].iphi + so_out_jet_boosted[idx+5].range(25, 19);
+			tmp_link_out[0].range(bHi10, bLo10) = 0x003F & calo_coor[idx_srt].ieta + so_out_jet_boosted[idx].range(31, 26);
+			tmp_link_out[1].range(bHi10, bLo10) = 0x003F & calo_coor[idx_srt_1].ieta + so_out_jet_boosted[idx+4].range(31, 26);
 
-                        int bLo12 = bHi11 + 1;
-                        int bHi12 = bLo12 + 5;
+			int bLo11 = bHi10 + 1;
+			int bHi11 = bLo11;
 
-                        if (side == 1)
-                                tmp_link_out[0].range(bHi12, bLo12) = calo_coor[idx_srt].ieta - so_out_jet_boosted[idx].range(31, 26);
-                        else
-                                tmp_link_out[0].range(bHi12, bLo12) = calo_coor[idx_srt].ieta + so_out_jet_boosted[idx].range(31, 26);
+			side = calo_coor[idx_srt].side;
+			side_1 = calo_coor[idx_srt_1].side;
 
-                        if (side_1 == 1)
-                                tmp_link_out[1].range(bHi12, bLo12) = calo_coor[idx_srt_1].ieta - so_out_jet_boosted[idx+5].range(31, 26);
-                        else
-                                tmp_link_out[1].range(bHi12, bLo12) = calo_coor[idx_srt_1].ieta + so_out_jet_boosted[idx+5].range(31, 26);
+			tmp_link_out[0].range(bHi11, bLo11) = side;
+			tmp_link_out[1].range(bHi11, bLo11) = side_1;
 
-//                        if((double)tmp_link_out[0].range(bHi9, bLo9) > 0) cout << "Boosted jet :" << idx << " ET: " << dec << tmp_link_out[0].range(bHi9, bLo9) << " Side: " << tmp_link_out[0].range(bHi10, bLo10) << " iPhi: " << tmp_link_out[0].range(bHi11, bLo11)  << " iEta: " << tmp_link_out[0].range(bHi12, bLo12) << endl;
-//                        if((double)tmp_link_out[1].range(bHi9, bLo9) > 0) cout << "Boosted jet :" << idx+5 << " ET: " << dec << tmp_link_out[1].range(bHi9, bLo9) << " Side: " << tmp_link_out[1].range(bHi10, bLo10) << " iPhi: " << tmp_link_out[1].range(bHi11, bLo11)  << " iEta: " << tmp_link_out[1].range(bHi12, bLo12) << endl;
+			int bLo12 = bHi11 + 1;
+			int bHi12 = bLo12 + 10;
+
+			tmp_link_out[0].range(bHi12, bLo12) = so_out_jet_boosted[idx].range(9, 0);
+			tmp_link_out[1].range(bHi12, bLo12) = so_out_jet_boosted[idx+4].range(9, 0);
+
+                        //if((double)tmp_link_out[0].range(bHi12, bLo12) > 0) cout << "Boosted jet :" << idx << "\tiPhi:  " << dec << tmp_link_out[0].range(bHi9, bLo9) << "\tiEta:  " << tmp_link_out[0].range(bHi10, bLo10) << "\tSide:  " << tmp_link_out[0].range(bHi11, bLo11)  << "\tET:  " << tmp_link_out[0].range(bHi12, bLo12) << endl;
+                        //if((double)tmp_link_out[1].range(bHi12, bLo12) > 0) cout << "Boosted jet :" << idx+4 << "\tiPhi:  " << dec << tmp_link_out[1].range(bHi9, bLo9) << "\tiEta:  " << tmp_link_out[1].range(bHi10, bLo10) << "\tSide:  " << tmp_link_out[1].range(bHi11, bLo11)  << "\tET:  " << tmp_link_out[1].range(bHi12, bLo12) << endl;
                 }
         }
 

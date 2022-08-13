@@ -86,7 +86,6 @@ int main(int argc, char ** argv) {
 					ifs >> hex >> tmp;
 					link_in[link].range(127, 96) = tmp;
 				}
-
 				if  (ifs.eof())
 					break;
 			}
@@ -119,14 +118,14 @@ int main(int argc, char ** argv) {
 
 	}
 
-	string output_diff("diff -w " + ofname + " " + orfname);
+	//string output_diff("diff -w " + ofname + " " + orfname);
 
-	if (system(output_diff.c_str())) {
-		cout << "*** Output data verification. FAILED! ***" << endl;
-		return 0;
-	} else {
-		cout << "*** Output data verification. PASSED ***" << endl;
-		return 0;
-	}
+	//if (system(output_diff.c_str())) {
+	//	cout << "*** Output data verification. FAILED! ***" << endl;
+	//	return 0;
+	//} else {
+	//	cout << "*** Output data verification. PASSED ***" << endl;
+	//	return 0;
+	//}
 }
 
