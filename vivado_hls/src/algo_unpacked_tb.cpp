@@ -58,7 +58,7 @@ int main(int argc, char ** argv) {
 	uint64_t data[N_CH_IN];
 
 	ofs << "=============================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================" << endl;
-	ofs << "WordCnt             LINK_00               LINK_01               LINK_02               LINK_03               LINK_04               LINK_05               LINK_06               LINK_07               LINK_08               LINK_09               LINK_10               LINK_11               LINK_12               LINK_13               LINK_14               LINK_15               LINK_16               LINK_17               LINK_18               LINK_19               LINK_20               LINK_21               LINK_22               LINK_23               LINK_24               LINK_25               LINK_26               LINK_27               LINK_28               LINK_29               LINK_30               LINK_31               LINK_32               LINK_33               LINK_34               LINK_35" << endl;
+	ofs << "WordCnt             LINK_00               LINK_01" << endl;
 	ofs << "#BeginData" << endl;
 
 	while (!ifs.eof()) {
@@ -96,36 +96,38 @@ int main(int argc, char ** argv) {
 
 		algo_unpacked(link_in, link_out);
 
-		//wordCnt-=2; 
-		wordCnt--; // TODO
+		wordCnt-=3;
 
-#if 0
-		for (int cyc = 0; cyc < 3; cyc++) {
+		for (int cyc = 0; cyc < 4; cyc++) {
 			ofs << "0x" << setfill('0') << setw(4) << hex << wordCnt++ << "   ";
 			for (int link = 0; link < N_CH_OUT; link++) {
-
-				if (cyc == 0)
-					ofs << "0x" << setfill('0') << setw(16) << hex << link_out[link].range(63,0).to_int64() << "    ";
-				else if (cyc == 1)
-					ofs << "0x" << setfill('0') << setw(16) << hex << link_out[link].range(127,64).to_int64() << "    ";
-				else
-					ofs << "0x" << setfill('0') << setw(16) << hex << link_out[link].range(191,128).to_int64() << "    ";
+				if (cyc == 0) {
+					ofs << "0x" << setw(8) << hex << link_out[link].range(31,0).to_int() << "    ";
+				}
+				else if (cyc == 1) {
+					ofs << "0x" << setw(8) << hex << link_out[link].range(63,32).to_int() << "    ";
+				}
+				else if (cyc == 2) {
+					ofs << "0x" << setw(8) << hex << link_out[link].range(95,64).to_int() << "    ";
+				}
+				else {
+					ofs << "0x" << setw(8) << hex << link_out[link].range(127,96).to_int() << "    ";
+				}
 
 			}
 			ofs<< std::endl;
 		}
-#endif
 
 	}
 
-	//string output_diff("diff -w " + ofname + " " + orfname);
+	string output_diff("diff -w " + ofname + " " + orfname);
 
-	//if (system(output_diff.c_str())) {
-	//	cout << "*** Output data verification. FAILED! ***" << endl;
-	//	return 0;
-	//} else {
-	//	cout << "*** Output data verification. PASSED ***" << endl;
-	//	return 0;
-	//}
+	if (system(output_diff.c_str())) {
+		cout << "*** Output data verification. FAILED! ***" << endl;
+		return 0;
+	} else {
+		cout << "*** Output data verification. PASSED ***" << endl;
+		return 0;
+	}
 }
 
