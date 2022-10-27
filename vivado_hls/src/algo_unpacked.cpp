@@ -44,11 +44,11 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
 #pragma HLS INTERFACE ap_ctrl_hs port=return
    
 
-	// null algo specific pragma: avoid fully combinatorial algo by specifying min latency
-	// otherwise algorithm clock input (ap_clk) gets optimized away
+    // null algo specific pragma: avoid fully combinatorial algo by specifying min latency
+    // otherwise algorithm clock input (ap_clk) gets optimized away
 #pragma HLS latency min=4
 
-//	for (int lnk = 0; lnk < N_CH_OUT ; lnk++) {
+//  for (int lnk = 0; lnk < N_CH_OUT ; lnk++) {
 //#pragma HLS UNROLL
 ////  pass-through "algo"
 //       link_out[lnk].range(7,0) = 0;            // reserved for 8b10b control word
@@ -200,39 +200,39 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
                 ap_uint<9> idx_srt, idx_srt_1;
 
                 { // Boosted jets
-		  // output scheme: 4x32-bits should fine in one 10-Gbps fiber. For the format the interface document states that the current jet
-		  // collection is 8 bits phi then 8 bits in eta (7 bits position then 1 bit
-		  // for +/- eta) then 11 bits et with LSB 0.5 GeV and 5 spare bits.
-			int bLo9 = idx*32;
-			int bHi9 = bLo9 + 7;
+          // output scheme: 4x32-bits should fine in one 10-Gbps fiber. For the format the interface document states that the current jet
+          // collection is 8 bits phi then 8 bits in eta (7 bits position then 1 bit
+          // for +/- eta) then 11 bits et with LSB 0.5 GeV and 5 spare bits.
+            int bLo9 = idx*32;
+            int bHi9 = bLo9 + 7;
 
-			idx_srt = so_out_jet_boosted[idx].range(18, 10);
-			idx_srt_1 = so_out_jet_boosted[idx+4].range(18, 10);
-			int test1 = 0x007F & calo_coor[idx_srt].iphi + so_out_jet_boosted[idx].range(25, 19);
-			int test2 = 0x007F & calo_coor[idx_srt_1].iphi + so_out_jet_boosted[idx+4].range(25, 19);
-			tmp_link_out[0].range(bHi9, bLo9) = !signbit(test1 - 72) ? (0x007F & test1 - 0x0048) : (0x007F & test1);
-			tmp_link_out[1].range(bHi9, bLo9) = !signbit(test2 - 72) ? (0x007F & test2 - 0x0048) : (0x007F & test2);
+            idx_srt = so_out_jet_boosted[idx].range(18, 10);
+            idx_srt_1 = so_out_jet_boosted[idx+4].range(18, 10);
+            int test1 = 0x007F & calo_coor[idx_srt].iphi + so_out_jet_boosted[idx].range(25, 19);
+            int test2 = 0x007F & calo_coor[idx_srt_1].iphi + so_out_jet_boosted[idx+4].range(25, 19);
+            tmp_link_out[0].range(bHi9, bLo9) = !signbit(test1 - 72) ? (0x007F & test1 - 0x0048) : (0x007F & test1);
+            tmp_link_out[1].range(bHi9, bLo9) = !signbit(test2 - 72) ? (0x007F & test2 - 0x0048) : (0x007F & test2);
 
-			int bLo10 = bHi9 + 1;
-			int bHi10 = bLo10 + 6;
+            int bLo10 = bHi9 + 1;
+            int bHi10 = bLo10 + 6;
 
-			tmp_link_out[0].range(bHi10, bLo10) = 0x003F & calo_coor[idx_srt].ieta + so_out_jet_boosted[idx].range(31, 26);
-			tmp_link_out[1].range(bHi10, bLo10) = 0x003F & calo_coor[idx_srt_1].ieta + so_out_jet_boosted[idx+4].range(31, 26);
+            tmp_link_out[0].range(bHi10, bLo10) = 0x003F & calo_coor[idx_srt].ieta + so_out_jet_boosted[idx].range(31, 26);
+            tmp_link_out[1].range(bHi10, bLo10) = 0x003F & calo_coor[idx_srt_1].ieta + so_out_jet_boosted[idx+4].range(31, 26);
 
-			int bLo11 = bHi10 + 1;
-			int bHi11 = bLo11;
+            int bLo11 = bHi10 + 1;
+            int bHi11 = bLo11;
 
-			side = calo_coor[idx_srt].side;
-			side_1 = calo_coor[idx_srt_1].side;
+            side = calo_coor[idx_srt].side;
+            side_1 = calo_coor[idx_srt_1].side;
 
-			tmp_link_out[0].range(bHi11, bLo11) = side;
-			tmp_link_out[1].range(bHi11, bLo11) = side_1;
+            tmp_link_out[0].range(bHi11, bLo11) = side;
+            tmp_link_out[1].range(bHi11, bLo11) = side_1;
 
-			int bLo12 = bHi11 + 1;
-			int bHi12 = bLo12 + 10;
+            int bLo12 = bHi11 + 1;
+            int bHi12 = bLo12 + 10;
 
-			tmp_link_out[0].range(bHi12, bLo12) = so_out_jet_boosted[idx].range(9, 0);
-			tmp_link_out[1].range(bHi12, bLo12) = so_out_jet_boosted[idx+4].range(9, 0);
+            tmp_link_out[0].range(bHi12, bLo12) = so_out_jet_boosted[idx].range(9, 0);
+            tmp_link_out[1].range(bHi12, bLo12) = so_out_jet_boosted[idx+4].range(9, 0);
 
                         //if((double)tmp_link_out[0].range(bHi12, bLo12) > 0) cout << "Boosted jet :" << idx << "\tiPhi:  " << dec << tmp_link_out[0].range(bHi9, bLo9) << "\tiEta:  " << tmp_link_out[0].range(bHi10, bLo10) << "\tSide:  " << tmp_link_out[0].range(bHi11, bLo11)  << "\tET:  " << tmp_link_out[0].range(bHi12, bLo12) << endl;
                         //if((double)tmp_link_out[1].range(bHi12, bLo12) > 0) cout << "Boosted jet :" << idx+4 << "\tiPhi:  " << dec << tmp_link_out[1].range(bHi9, bLo9) << "\tiEta:  " << tmp_link_out[1].range(bHi10, bLo10) << "\tSide:  " << tmp_link_out[1].range(bHi11, bLo11)  << "\tET:  " << tmp_link_out[1].range(bHi12, bLo12) << endl;
