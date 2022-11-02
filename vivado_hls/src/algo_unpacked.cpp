@@ -11,6 +11,7 @@
 
 using namespace std;
 
+#include "myproject.h"
 #include "algo_unpacked.h"
 #include "UCTSummaryCard.hpp"
 #include "PU_LUT.h"
@@ -62,6 +63,8 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
 #pragma HLS UNROLL
                 tmp_link_out[idx]         = 0;
         }
+        ap_ufixed<10, 10> et_calo_ad[N_INPUT_1_1];
+#pragma HLS ARRAY_RESHAPE variable=et_calo_ad complete dim=0
 
         static bool first = true; //true to print 
         region_t centr_region[NR_CNTR_REG];
@@ -76,6 +79,7 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
                 int bitLo = ((iRegion - link_idx * NRegionsPerLink) % NRegionsPerLink) * 16 + 8;
                 int bitHi = bitLo + 15;
                 uint16_t region_raw = link_in[link_idx].range(bitHi, bitLo);
+                et_calo_ad[iRegion] = (region_raw & 0x3FF >> 0); // 10 bits
                 centr_region[iRegion].et = (region_raw & 0x3FF >> 0);   // 10 bits
                 centr_region[iRegion].eg_veto = (region_raw & 0x7FF) >> 10;   // 1 bit
                 centr_region[iRegion].tau_veto = (region_raw & 0xFFF) >> 11;   // 1 bit
@@ -191,6 +195,12 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
 
         // Sorting objects
         bitonicSort64(so_in_jet_boosted, so_out_jet_boosted);
+
+        // Anomlay detection algorithm
+        ap_fixed<11,5> layer6_out[N_LAYER_6];
+#pragma HLS ARRAY_PARTITION variable=layer6_out complete dim=0
+        myproject(et_calo_ad, layer6_out);
+        //cout << setprecision(32) << "Neural network output: " << " " << layer6_out[0] << endl;
 
         // Assign the algorithm outputs
         for (int idx = 0; idx < 4; idx++)

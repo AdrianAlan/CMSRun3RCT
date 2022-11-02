@@ -9,6 +9,9 @@ array set opt {
     tv test2
 }
 
+set tcldir [file dirname [info script]]
+source [file join $tcldir project.tcl]
+
 foreach arg $::argv {
     foreach o [lsort [array names opt]] {
          regexp "$o=+(\\w+)" $arg unused opt($o)
@@ -23,14 +26,20 @@ proc report_time { op_name time_start time_end  } {
  puts "***** ${op_name} COMPLETED IN ${time_h}h${time_m}m${time_s}s *****"
 }
 
-# open the project, don't forget to reset
-open_project -reset proj
+if {$opt(reset)} {
+    open_project -reset ${project_name}_prj
+} else {
+    open_project ${project_name}_prj
+}
 
 #Add sources and specify top function
 source "./sources.tcl"
 
-#reset the solution
-open_solution -reset "solution1"
+if {$opt(reset)} {
+    open_solution -reset "solution1"
+} else {
+    open_solution "solution1"
+}
 
 #Specify FPGA and clock constraints
 source "./solution.tcl"
