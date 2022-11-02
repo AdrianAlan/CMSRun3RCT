@@ -11,7 +11,7 @@ array set opt {
 
 foreach arg $::argv {
     foreach o [lsort [array names opt]] {
-         regexp "$o=+(\\w+)$" $arg unused opt($o)
+         regexp "$o=+(\\w+)" $arg unused opt($o)
     }
 }
 
