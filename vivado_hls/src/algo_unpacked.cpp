@@ -202,6 +202,10 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
         myproject(et_calo_ad, layer6_out);
         //cout << setprecision(32) << "Neural network output: " << " " << layer6_out[0] << endl;
 
+        int offset = 20;
+        tmp_link_out[0].range(19, 0) = layer6_out[0].range() & (2047);
+        tmp_link_out[1].range(19, 0) = layer6_out[0].range() & (2047);
+
         // Assign the algorithm outputs
         for (int idx = 0; idx < 4; idx++)
         {
@@ -213,7 +217,7 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
           // output scheme: 4x32-bits should fine in one 10-Gbps fiber. For the format the interface document states that the current jet
           // collection is 8 bits phi then 8 bits in eta (7 bits position then 1 bit
           // for +/- eta) then 11 bits et with LSB 0.5 GeV and 5 spare bits.
-            int bLo9 = idx*32;
+            int bLo9 = offset + idx*27;
             int bHi9 = bLo9 + 7;
 
             idx_srt = so_out_jet_boosted[idx].range(18, 10);
