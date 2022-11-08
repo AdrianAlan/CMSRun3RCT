@@ -27,10 +27,10 @@ void myproject(
 ) {
 
     //hls-fpga-machine-learning insert IO
-    #pragma HLS ARRAY_RESHAPE variable=Inputs complete dim=0
-    #pragma HLS ARRAY_PARTITION variable=layer6_out complete dim=0
-    #pragma HLS INTERFACE ap_vld port=Inputs,layer6_out 
-    #pragma HLS PIPELINE 
+    //#pragma HLS ARRAY_RESHAPE variable=Inputs complete dim=0
+    //#pragma HLS ARRAY_PARTITION variable=layer6_out complete dim=0
+    //#pragma HLS INTERFACE ap_vld port=Inputs,layer6_out 
+    #pragma HLS INLINE 
 
 #ifndef __SYNTHESIS__
     static bool loaded_weights = false;

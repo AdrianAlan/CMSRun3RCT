@@ -63,10 +63,7 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
 #pragma HLS UNROLL
                 tmp_link_out[idx]         = 0;
         }
-        ap_ufixed<10, 10> et_calo_ad[N_INPUT_1_1];
-#pragma HLS ARRAY_RESHAPE variable=et_calo_ad complete dim=0
 
-        static bool first = true; //true to print 
         region_t centr_region[NR_CNTR_REG];
 #pragma HLS ARRAY_PARTITION variable=centr_region complete dim=1
         regionLoop: for(int iRegion = 0; iRegion < NR_CNTR_REG; iRegion++) {
@@ -79,7 +76,6 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
                 int bitLo = ((iRegion - link_idx * NRegionsPerLink) % NRegionsPerLink) * 16 + 8;
                 int bitHi = bitLo + 15;
                 uint16_t region_raw = link_in[link_idx].range(bitHi, bitLo);
-                et_calo_ad[iRegion] = (region_raw & 0x3FF >> 0); // 10 bits
                 centr_region[iRegion].et = (region_raw & 0x3FF >> 0);   // 10 bits
                 centr_region[iRegion].eg_veto = (region_raw & 0x7FF) >> 10;   // 1 bit
                 centr_region[iRegion].tau_veto = (region_raw & 0xFFF) >> 11;   // 1 bit
@@ -88,6 +84,12 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
                 //cout << "Calo region " << " ET: " << centr_region[iRegion].et << " Eta: " << centr_region[iRegion].rloc_eta << " Phi: " << centr_region[iRegion].rloc_phi << " EG veto: " << centr_region[iRegion].eg_veto << " Tau veto: " << centr_region[iRegion].tau_veto << endl;
         }
         //cout<<"Got all regions"<<endl;
+
+        // Anomlay detection algorithm
+        ap_ufixed<10, 10> et_calo_ad[N_INPUT_1_1];
+#pragma HLS ARRAY_RESHAPE variable=et_calo_ad complete dim=0
+        ap_fixed<11,5> layer6_out[N_LAYER_6];
+#pragma HLS ARRAY_PARTITION variable=layer6_out complete dim=0
 
 ////////////////////////////////////////////////////////////
         // Objets from input
@@ -154,7 +156,7 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
         pum_bin = pum_level / 14;
 
 ////////////////////////////////////////////////////////////
-        // Unpack calo ET values in et_calo array
+         // Unpack calo ET values in et_calo array
         for (int idx = 0; idx < NR_CNTR_REG; idx++)
         {
 #pragma HLS UNROLL
@@ -196,17 +198,22 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
         // Sorting objects
         bitonicSort64(so_in_jet_boosted, so_out_jet_boosted);
 
-        // Anomlay detection algorithm
-        ap_fixed<11,5> layer6_out[N_LAYER_6];
-#pragma HLS ARRAY_PARTITION variable=layer6_out complete dim=0
-        myproject(et_calo_ad, layer6_out);
         //cout << setprecision(32) << "Neural network output: " << " " << layer6_out[0] << endl;
 
-        int offset = 20;
-        tmp_link_out[0].range(19, 0) = layer6_out[0].range() & (2047);
-        tmp_link_out[1].range(19, 0) = layer6_out[0].range() & (2047);
+        // Unpack calo ET values in et_calo array
+        for (int idx = 0; idx < NR_CNTR_REG; idx++)
+        {
+#pragma HLS UNROLL
+               et_calo_ad[idx] = centr_region[idx].et;
+        }
 
+        myproject(et_calo_ad, layer6_out);
+ 
         // Assign the algorithm outputs
+        int offset = 20;
+        tmp_link_out[0].range(19, 0) = layer6_out[0].range() & (0xFFFFF);
+        tmp_link_out[1].range(19, 0) = layer6_out[0].range() & (0xFFFFF);
+
         for (int idx = 0; idx < 4; idx++)
         {
 #pragma HLS UNROLL
@@ -252,18 +259,19 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
                         //if((double)tmp_link_out[1].range(bHi12, bLo12) > 0) cout << "Boosted jet :" << idx+4 << "\tiPhi:  " << dec << tmp_link_out[1].range(bHi9, bLo9) << "\tiEta:  " << tmp_link_out[1].range(bHi10, bLo10) << "\tSide:  " << tmp_link_out[1].range(bHi11, bLo11)  << "\tET:  " << tmp_link_out[1].range(bHi12, bLo12) << endl;
                 }
         }
+        //tmp_link_out[1].range(19, 0) = layer6_out[0].range() & (0xFFFFF);
 
         for(int i = 0; i < N_CH_OUT; i++){
 #pragma HLS unroll
                 link_out[i] = tmp_link_out[i];
         }
-
 }
 
 ////////////////////////////////////////////////////////////
 // count number of ones in bitString
 ap_uint<8> popcount(ap_uint<NR_CNTR_REG> bitString)
 {
+#pragma HLS PIPELINE II=4
         ap_uint<9> popcnt = 0;
 
         for (ap_uint<9> b = 0; b < NR_CNTR_REG; b++)
