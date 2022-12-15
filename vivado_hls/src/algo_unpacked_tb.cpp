@@ -13,7 +13,7 @@
 using namespace std;
 
 ap_uint<128> link_in[N_CH_IN];
-ap_uint<128> link_out[N_CH_OUT];
+ap_uint<192> link_out[N_CH_OUT];
 
 int main(int argc, char ** argv) {
 
@@ -59,9 +59,10 @@ int main(int argc, char ** argv) {
     ofs << "WordCnt             LINK_00               LINK_01" << endl;
     ofs << "#BeginData" << endl;
 
+    //wordCnt-=3;
     while (!ifs.eof()) {
         for (int cyc = 0; cyc < 4; cyc++) {
-            ifs >> hex >> wordCnt;
+            //ifs >> hex >> wordCnt;
             if  (ifs.eof())
                 break;
 
@@ -94,9 +95,8 @@ int main(int argc, char ** argv) {
 
         algo_unpacked(link_in, link_out);
 
-        wordCnt-=3;
 
-        for (int cyc = 0; cyc < 4; cyc++) {
+        for (int cyc = 0; cyc < 6; cyc++) {
             ofs << "0x" << setfill('0') << setw(4) << hex << wordCnt++ << "   ";
             for (int link = 0; link < N_CH_OUT; link++) {
                 if (cyc == 0) {
@@ -108,8 +108,14 @@ int main(int argc, char ** argv) {
                 else if (cyc == 2) {
                     ofs << "0x" << setw(8) << hex << link_out[link].range(95,64).to_int() << "    ";
                 }
-                else {
+                else if (cyc == 3) {
                     ofs << "0x" << setw(8) << hex << link_out[link].range(127,96).to_int() << "    ";
+                }
+                else if (cyc == 4) {
+                    ofs << "0x" << setw(8) << hex << link_out[link].range(159,128).to_int() << "    ";
+                }
+                else {
+                    ofs << "0x" << setw(8) << hex << link_out[link].range(191,160).to_int() << "    ";
                 }
 
             }

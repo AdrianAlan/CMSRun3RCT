@@ -9,7 +9,7 @@
 #include <iomanip>
 #include <string>
 
-using namespace std;
+//using namespace std;
 
 #include "myproject.h"
 #include "algo_unpacked.h"
@@ -35,7 +35,7 @@ const uint16_t MaxRegions = N_CH_IN * NRegionsPerLink;
   * !!! N.B. 2: make sure to assign every bit of link_out[] data. First byte should be assigned zero.
   */
 
-void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT])
+void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<192> link_out[N_CH_OUT])
 {
 
 // !!! Retain these 4 #pragma directives below in your algo_unpacked implementation !!!
@@ -57,15 +57,20 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
 //       link_out[lnk].range(119, 8) = link_in[lnk].range(119, 8) ;   // input to output pass-through
 //    }
 
-        ap_uint<128> tmp_link_out[N_CH_OUT];
+        ap_uint<192> tmp_link_out[N_CH_OUT];
 #pragma HLS ARRAY_PARTITION variable=tmp_link_out    complete dim=0
         for (int idx = 0; idx < N_CH_OUT; idx++){
 #pragma HLS UNROLL
-                tmp_link_out[idx]         = 0;
+                tmp_link_out[idx] = 0;
         }
 
+        ap_ufixed<10, 10> et_calo_ad[N_INPUT_1_1];
+#pragma HLS ARRAY_RESHAPE variable=et_calo_ad complete dim=0
+        ap_fixed<11,5> layer6_out[N_LAYER_6];
+#pragma HLS ARRAY_PARTITION variable=layer6_out complete dim=0
         region_t centr_region[NR_CNTR_REG];
 #pragma HLS ARRAY_PARTITION variable=centr_region complete dim=1
+
         regionLoop: for(int iRegion = 0; iRegion < NR_CNTR_REG; iRegion++) {
 #pragma HLS UNROLL
                 if(iRegion > MaxRegions) {
@@ -76,6 +81,7 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
                 int bitLo = ((iRegion - link_idx * NRegionsPerLink) % NRegionsPerLink) * 16 + 8;
                 int bitHi = bitLo + 15;
                 uint16_t region_raw = link_in[link_idx].range(bitHi, bitLo);
+                et_calo_ad[iRegion] = (region_raw & 0x3FF >> 0);   // 10 bits
                 centr_region[iRegion].et = (region_raw & 0x3FF >> 0);   // 10 bits
                 centr_region[iRegion].eg_veto = (region_raw & 0x7FF) >> 10;   // 1 bit
                 centr_region[iRegion].tau_veto = (region_raw & 0xFFF) >> 11;   // 1 bit
@@ -86,10 +92,7 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
         //cout<<"Got all regions"<<endl;
 
         // Anomlay detection algorithm
-        ap_ufixed<10, 10> et_calo_ad[N_INPUT_1_1];
-#pragma HLS ARRAY_RESHAPE variable=et_calo_ad complete dim=0
-        ap_fixed<11,5> layer6_out[N_LAYER_6];
-#pragma HLS ARRAY_PARTITION variable=layer6_out complete dim=0
+        myproject(et_calo_ad, layer6_out);
 
 ////////////////////////////////////////////////////////////
         // Objets from input
@@ -199,67 +202,47 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<128> link_out[N_CH_OUT
         bitonicSort64(so_in_jet_boosted, so_out_jet_boosted);
 
         //cout << setprecision(32) << "Neural network output: " << " " << layer6_out[0] << endl;
-
-        // Unpack calo ET values in et_calo array
-        for (int idx = 0; idx < NR_CNTR_REG; idx++)
-        {
-#pragma HLS UNROLL
-               et_calo_ad[idx] = centr_region[idx].et;
-        }
-
-        myproject(et_calo_ad, layer6_out);
  
         // Assign the algorithm outputs
-        int offset = 20;
-        tmp_link_out[0].range(19, 0) = layer6_out[0].range() & (0xFFFFF);
-        tmp_link_out[1].range(19, 0) = layer6_out[0].range() & (0xFFFFF);
+        // 8 bits for link alignment markers and CRC checksum word
+        int offset = 22;
+        tmp_link_out[0].range(20, 8) = layer6_out[0].range() & (0x1FFF);
 
-        for (int idx = 0; idx < 4; idx++)
-        {
+        for (int idx = 0; idx < 6; idx++) {
 #pragma HLS UNROLL
-                ap_uint<1> side, side_1;
-                ap_uint<9> idx_srt, idx_srt_1;
+            ap_uint<1> side;
+            ap_uint<9> idx_srt;
 
-                { // Boosted jets
-          // output scheme: 4x32-bits should fine in one 10-Gbps fiber. For the format the interface document states that the current jet
-          // collection is 8 bits phi then 8 bits in eta (7 bits position then 1 bit
-          // for +/- eta) then 11 bits et with LSB 0.5 GeV and 5 spare bits.
+            /* Boosted jets
+               output scheme: 4x32-bits should fine in one 10-Gbps fiber.
+               For the format the interface document states that the current jet
+               collection is 8 bits phi then 8 bits in eta (7 bits position then 1 bit
+               for +/- eta) then 11 bits et with LSB 0.5 GeV and 5 spare bits.
+            */
             int bLo9 = offset + idx*27;
             int bHi9 = bLo9 + 7;
 
             idx_srt = so_out_jet_boosted[idx].range(18, 10);
-            idx_srt_1 = so_out_jet_boosted[idx+4].range(18, 10);
             int test1 = 0x007F & calo_coor[idx_srt].iphi + so_out_jet_boosted[idx].range(25, 19);
-            int test2 = 0x007F & calo_coor[idx_srt_1].iphi + so_out_jet_boosted[idx+4].range(25, 19);
             tmp_link_out[0].range(bHi9, bLo9) = !signbit(test1 - 72) ? (0x007F & test1 - 0x0048) : (0x007F & test1);
-            tmp_link_out[1].range(bHi9, bLo9) = !signbit(test2 - 72) ? (0x007F & test2 - 0x0048) : (0x007F & test2);
 
             int bLo10 = bHi9 + 1;
             int bHi10 = bLo10 + 6;
 
             tmp_link_out[0].range(bHi10, bLo10) = 0x003F & calo_coor[idx_srt].ieta + so_out_jet_boosted[idx].range(31, 26);
-            tmp_link_out[1].range(bHi10, bLo10) = 0x003F & calo_coor[idx_srt_1].ieta + so_out_jet_boosted[idx+4].range(31, 26);
 
             int bLo11 = bHi10 + 1;
             int bHi11 = bLo11;
 
             side = calo_coor[idx_srt].side;
-            side_1 = calo_coor[idx_srt_1].side;
 
             tmp_link_out[0].range(bHi11, bLo11) = side;
-            tmp_link_out[1].range(bHi11, bLo11) = side_1;
 
             int bLo12 = bHi11 + 1;
             int bHi12 = bLo12 + 10;
 
             tmp_link_out[0].range(bHi12, bLo12) = so_out_jet_boosted[idx].range(9, 0);
-            tmp_link_out[1].range(bHi12, bLo12) = so_out_jet_boosted[idx+4].range(9, 0);
-
-                        //if((double)tmp_link_out[0].range(bHi12, bLo12) > 0) cout << "Boosted jet :" << idx << "\tiPhi:  " << dec << tmp_link_out[0].range(bHi9, bLo9) << "\tiEta:  " << tmp_link_out[0].range(bHi10, bLo10) << "\tSide:  " << tmp_link_out[0].range(bHi11, bLo11)  << "\tET:  " << tmp_link_out[0].range(bHi12, bLo12) << endl;
-                        //if((double)tmp_link_out[1].range(bHi12, bLo12) > 0) cout << "Boosted jet :" << idx+4 << "\tiPhi:  " << dec << tmp_link_out[1].range(bHi9, bLo9) << "\tiEta:  " << tmp_link_out[1].range(bHi10, bLo10) << "\tSide:  " << tmp_link_out[1].range(bHi11, bLo11)  << "\tET:  " << tmp_link_out[1].range(bHi12, bLo12) << endl;
-                }
         }
-        //tmp_link_out[1].range(19, 0) = layer6_out[0].range() & (0xFFFFF);
 
         for(int i = 0; i < N_CH_OUT; i++){
 #pragma HLS unroll
