@@ -26,7 +26,7 @@ proc remove_recursive_log_wave {} {
     set tcldir [file dirname [info script]]
     source [file join $tcldir project.tcl]
 
-    set filename ${project_name}_prj/solution1/sim/verilog/${project_name}.tcl
+    set filename ${project_name}_prj/solution1/sim/verilog/algo_unpacked.tcl
     set timestamp [clock format [clock seconds] -format {%Y%m%d%H%M%S}]
     set temp     $filename.new.$timestamp
     # set backup   $filename.bak.$timestamp
@@ -181,62 +181,68 @@ if {$opt(synth)} {
    csynth_design
    set time_end [clock clicks -milliseconds]
    report_time "C/RTL SYNTHESIS" $time_start $time_end
-   if {$opt(cosim)} {
-       puts "***** C/RTL SIMULATION *****"
-       # TODO: This is a workaround (Xilinx defines __RTL_SIMULATION__ only for SystemC testbenches).
-       add_files -tb src/algo_unpacked_tb.cpp -cflags "-std=c++0x -DRTL_SIM"
-       set time_start [clock clicks -milliseconds]
-       cosim_design -argv $opt(tv) -trace_level all
-       if {$opt(fifo_opt)} {
-           puts "\[hls4ml\] - FIFO optimization started"
-           add_vcd_instructions_tcl
-       }
-       remove_recursive_log_wave
-       set old_pwd [pwd]
-       cd ${project_name}_prj/solution1/sim/verilog/
-       source run_sim.tcl
-       cd $old_pwd
-       set time_end [clock clicks -milliseconds]
-       puts "INFO:"
-       if {[string equal "$backend" "vivadoaccelerator"]} {
-           puts [read [open ${project_name}_prj/solution1/sim/report/${project_name}_axi_cosim.rpt r]]
-       } else {
-           puts [read [open ${project_name}_prj/solution1/sim/report/${project_name}_cosim.rpt r]]
-       }
-       report_time "C/RTL SIMULATION" $time_start $time_end
-   }
-   if {$opt(validation)} {
-       puts "***** C/RTL VALIDATION *****"
+}
 
+if {$opt(cosim)} {
+    puts "***** C/RTL SIMULATION *****"
+    # TODO: This is a workaround (Xilinx defines __RTL_SIMULATION__ only for SystemC testbenches).
+    add_files -tb src/algo_unpacked_tb.cpp -cflags "-std=c++0x -DRTL_SIM"
+    set time_start [clock clicks -milliseconds]
 
-       if {[compare_files $CSIM_RESULTS $RTL_COSIM_RESULTS]} {
-           puts "INFO: Test PASSED"
-       } else {
-           puts "ERROR: Test failed"
-           puts "ERROR: - csim log:      $CSIM_RESULTS"
-           puts "ERROR: - RTL-cosim log: $RTL_COSIM_RESULTS"
-           exit 1
-       }
-   }
-   if {$opt(export)} {
-      puts "***** EXPORT IP *****"
-      set time_start [clock clicks -milliseconds]
-      export_design -format ip_catalog -display_name "HLS Algorithm IP" -description "HLS Algorithm IP" -library "hls"  -vendor "cern-cms" -version "1.0"
-      set time_end [clock clicks -milliseconds]
-      report_time "EXPORT IP" $time_start $time_end
-   }
-   if {$opt(vsynth)} {
-      puts "***** VIVADO SYNTHESIS *****"
-      if {[file exist ${project_name}_prj/solution1/syn/vhdl]} {
-          set time_start [clock clicks -milliseconds]
-          exec vivado -mode batch -source vivado_synth.tcl >@ stdout
-          set time_end [clock clicks -milliseconds]
-          report_time "VIVADO SYNTHESIS" $time_start $time_end
-      } else {
-          puts "ERROR: Cannot find generated VHDL files. Did you run C synthesis?"
-          exit 1
-      }
-   }
+    cosim_design -argv $opt(tv) -trace_level all
+
+    if {$opt(fifo_opt)} {
+        puts "\[hls4ml\] - FIFO optimization started"
+        add_vcd_instructions_tcl
+    }
+
+    remove_recursive_log_wave
+    set old_pwd [pwd]
+    cd ${project_name}_prj/solution1/sim/verilog/
+    source run_sim.tcl
+    cd $old_pwd
+
+    set time_end [clock clicks -milliseconds]
+    puts "INFO:"
+    if {[string equal "$backend" "vivadoaccelerator"]} {
+        puts [read [open ${project_name}_prj/solution1/sim/report/alog_unpacked_axi_cosim.rpt r]]
+    } else {
+        puts [read [open ${project_name}_prj/solution1/sim/report/algo_unpacked_cosim.rpt r]]
+    }
+    report_time "C/RTL SIMULATION" $time_start $time_end
+}
+
+if {$opt(validation)} {
+    puts "***** C/RTL VALIDATION *****"
+    if {[compare_files $CSIM_RESULTS $RTL_COSIM_RESULTS]} {
+        puts "INFO: Test PASSED"
+    } else {
+        puts "ERROR: Test failed"
+        puts "ERROR: - csim log:      $CSIM_RESULTS"
+        puts "ERROR: - RTL-cosim log: $RTL_COSIM_RESULTS"
+        exit 1
+    }
+}
+
+if {$opt(export)} {
+    puts "***** EXPORT IP *****"
+    set time_start [clock clicks -milliseconds]
+    export_design -format ip_catalog -display_name "HLS Algorithm IP" -description "HLS Algorithm IP" -library "hls"  -vendor "cern-cms" -version "1.0"
+    set time_end [clock clicks -milliseconds]
+    report_time "EXPORT IP" $time_start $time_end
+}
+
+if {$opt(vsynth)} {
+    puts "***** VIVADO SYNTHESIS *****"
+    if {[file exist ${project_name}_prj/solution1/syn/vhdl]} {
+        set time_start [clock clicks -milliseconds]
+        exec vivado -mode batch -source vivado_synth.tcl >@ stdout
+        set time_end [clock clicks -milliseconds]
+        report_time "VIVADO SYNTHESIS" $time_start $time_end
+    } else {
+        puts "ERROR: Cannot find generated VHDL files. Did you run C synthesis?"
+        exit 1
+    }
 }
 
 exit
