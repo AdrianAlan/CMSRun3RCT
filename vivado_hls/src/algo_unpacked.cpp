@@ -9,8 +9,6 @@
 #include <iomanip>
 #include <string>
 
-//using namespace std;
-
 #include "myproject.h"
 #include "algo_unpacked.h"
 #include "UCTSummaryCard.hpp"
@@ -87,9 +85,7 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<192> link_out[N_CH_OUT
                 centr_region[iRegion].tau_veto = (region_raw & 0xFFF) >> 11;   // 1 bit
                 centr_region[iRegion].rloc_phi = (region_raw & 0x3FFF) >> 12;   // 2 bit
                 centr_region[iRegion].rloc_eta = (region_raw & 0xFFFF) >> 14;   // 2 bit
-                //cout << "Calo region " << " ET: " << centr_region[iRegion].et << " Eta: " << centr_region[iRegion].rloc_eta << " Phi: " << centr_region[iRegion].rloc_phi << " EG veto: " << centr_region[iRegion].eg_veto << " Tau veto: " << centr_region[iRegion].tau_veto << endl;
         }
-        //cout<<"Got all regions"<<endl;
 
         // Anomlay detection algorithm
         myproject(et_calo_ad, layer6_out);
@@ -201,8 +197,6 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<192> link_out[N_CH_OUT
         // Sorting objects
         bitonicSort64(so_in_jet_boosted, so_out_jet_boosted);
 
-        //cout << setprecision(32) << "Neural network output: " << " " << layer6_out[0] << endl;
- 
         // Assign the algorithm outputs
         // 8 bits for link alignment markers and CRC checksum word
         int offset = 22;
