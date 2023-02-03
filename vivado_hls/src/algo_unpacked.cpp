@@ -198,45 +198,40 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<192> link_out[N_CH_OUT
         bitonicSort64(so_in_jet_boosted, so_out_jet_boosted);
 
         // Assign the algorithm outputs
-        // 8 bits for link alignment markers and CRC checksum word
-        int offset = 22;
-        tmp_link_out[0].range(20, 8) = layer6_out[0].range() & (0x1FFF);
+        tmp_link_out[0].range(28, 28) = layer6_out[0].range(10, 10);
+        tmp_link_out[0].range(63, 60) = layer6_out[0].range(9, 6);
+        tmp_link_out[0].range(95, 92) = layer6_out[0].range(5, 1);
+        tmp_link_out[0].range(127, 127) = layer6_out[0].range(0, 0);
 
+        int word = 32;
         for (int idx = 0; idx < 6; idx++) {
 #pragma HLS UNROLL
-            ap_uint<1> side;
-            ap_uint<9> idx_srt;
-
             /* Boosted jets
-               output scheme: 4x32-bits should fine in one 10-Gbps fiber.
+               output scheme: 6x32-bits
                For the format the interface document states that the current jet
                collection is 8 bits phi then 8 bits in eta (7 bits position then 1 bit
-               for +/- eta) then 11 bits et with LSB 0.5 GeV and 5 spare bits.
+               for +/- eta) then 11 bits et and 1 bit for flag.
             */
-            int bLo9 = offset + idx*27;
-            int bHi9 = bLo9 + 7;
-
+            ap_uint<9> idx_srt;
             idx_srt = so_out_jet_boosted[idx].range(18, 10);
+
+            int bLoET = idx*word;
+            int bHiET = bLoET + 10;
+            tmp_link_out[0].range(bHiET, bLoET) = so_out_jet_boosted[idx].range(9, 0);
+
+            int bLoEta = bHiET + 1;
+            int bHiEta = bLoEta + 6;
+            tmp_link_out[0].range(bHiEta, bLoEta) = 0x003F & calo_coor[idx_srt].ieta + so_out_jet_boosted[idx].range(31, 26);
+
+            int bLoSide = bHiEta + 1;
+            int bHiSide = bLoSide;
+            tmp_link_out[0].range(bHiSide, bLoSide) = calo_coor[idx_srt].side;
+
+            int bLoPhi = bHiSide+1;
+            int bHiPhi = bLoPhi + 7;
             int test1 = 0x007F & calo_coor[idx_srt].iphi + so_out_jet_boosted[idx].range(25, 19);
-            tmp_link_out[0].range(bHi9, bLo9) = !signbit(test1 - 72) ? (0x007F & test1 - 0x0048) : (0x007F & test1);
-
-            int bLo10 = bHi9 + 1;
-            int bHi10 = bLo10 + 6;
-
-            tmp_link_out[0].range(bHi10, bLo10) = 0x003F & calo_coor[idx_srt].ieta + so_out_jet_boosted[idx].range(31, 26);
-
-            int bLo11 = bHi10 + 1;
-            int bHi11 = bLo11;
-
-            side = calo_coor[idx_srt].side;
-
-            tmp_link_out[0].range(bHi11, bLo11) = side;
-
-            int bLo12 = bHi11 + 1;
-            int bHi12 = bLo12 + 10;
-
-            tmp_link_out[0].range(bHi12, bLo12) = so_out_jet_boosted[idx].range(9, 0);
-        }
+            tmp_link_out[0].range(bHiPhi, bLoPhi) = !signbit(test1 - 72) ? (0x007F & test1 - 0x0048) : (0x007F & test1);
+       }
 
         for(int i = 0; i < N_CH_OUT; i++){
 #pragma HLS unroll
