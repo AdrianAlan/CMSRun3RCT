@@ -117,7 +117,6 @@ int main(int argc, char ** argv) {
                 else {
                     ofs << "0x" << setw(8) << hex << link_out[link].range(191,160).to_int() << "    ";
                 }
-
             }
             ofs<< std::endl;
         }
