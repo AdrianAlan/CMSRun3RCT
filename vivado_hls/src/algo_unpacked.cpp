@@ -220,17 +220,16 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<192> link_out[N_CH_OUT
             tmp_link_out[0].range(bHiET, bLoET) = so_out_jet_boosted[idx].range(9, 0);
 
             int bLoEta = bHiET + 1;
-            int bHiEta = bLoEta + 6;
-            tmp_link_out[0].range(bHiEta, bLoEta) = 0x003F & calo_coor[idx_srt].ieta + so_out_jet_boosted[idx].range(31, 26);
+            int bHiEta = bLoEta + 7;
+            int ieta = 0x003F & calo_coor[idx_srt].ieta + so_out_jet_boosted[idx].range(31, 26);
+            int isNegativeSide = calo_coor[idx_srt].side;
+            tmp_link_out[0].range(bHiEta, bLoEta) = ieta_lut[isNegativeSide][ieta-1];
 
-            int bLoSide = bHiEta + 1;
-            int bHiSide = bLoSide;
-            tmp_link_out[0].range(bHiSide, bLoSide) = calo_coor[idx_srt].side;
-
-            int bLoPhi = bHiSide+1;
+            int bLoPhi = bHiEta + 1;
             int bHiPhi = bLoPhi + 7;
             int test1 = 0x007F & calo_coor[idx_srt].iphi + so_out_jet_boosted[idx].range(25, 19);
-            tmp_link_out[0].range(bHiPhi, bLoPhi) = !signbit(test1 - 72) ? (0x007F & test1 - 0x0048) : (0x007F & test1);
+            int iphi = !signbit(test1 - 72) ? (0x007F & test1 - 0x0048) : (0x007F & test1);
+            tmp_link_out[0].range(bHiPhi, bLoPhi) = iphi_lut[iphi];;
        }
 
         for(int i = 0; i < N_CH_OUT; i++){
