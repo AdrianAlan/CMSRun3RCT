@@ -62,12 +62,12 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<192> link_out[N_CH_OUT
                 tmp_link_out[idx] = 0;
         }
 
-        ap_ufixed<10, 10> et_calo_ad[N_INPUT_1_1];
-#pragma HLS ARRAY_RESHAPE variable=et_calo_ad complete dim=0
-        ap_fixed<11,5> layer6_out[N_LAYER_6];
-#pragma HLS ARRAY_PARTITION variable=layer6_out complete dim=0
+        ap_ufixed<16, 8, AP_RND, AP_SAT, AP_SAT> layer14_out[N_LAYER_10];
+#pragma HLS ARRAY_PARTITION variable=layer14_out complete dim=0
         region_t centr_region[NR_CNTR_REG];
 #pragma HLS ARRAY_PARTITION variable=centr_region complete dim=1
+        ap_uint<10> et_calo_ad[NR_CNTR_REG];
+#pragma HLS ARRAY_RESHAPE variable=et_calo_ad complete dim=0
 
         regionLoop: for(int iRegion = 0; iRegion < NR_CNTR_REG; iRegion++) {
 #pragma HLS UNROLL
@@ -88,7 +88,7 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<192> link_out[N_CH_OUT
         }
 
         // Anomlay detection algorithm
-        cicada(et_calo_ad, layer6_out);
+        cicada(et_calo_ad, layer14_out);
 
 ////////////////////////////////////////////////////////////
         // Objets from input
@@ -197,12 +197,6 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<192> link_out[N_CH_OUT
         // Sorting objects
         bitonicSort64(so_in_jet_boosted, so_out_jet_boosted);
 
-        // Assign the algorithm outputs
-        tmp_link_out[0].range(28, 28) = layer6_out[0].range(10, 10);
-        tmp_link_out[0].range(63, 60) = layer6_out[0].range(9, 6);
-        tmp_link_out[0].range(95, 92) = layer6_out[0].range(5, 1);
-        tmp_link_out[0].range(127, 127) = layer6_out[0].range(0, 0);
-
         int word = 32;
         for (int idx = 0; idx < 6; idx++) {
 #pragma HLS UNROLL
@@ -231,6 +225,12 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<192> link_out[N_CH_OUT
             int iphi = !signbit(test1 - 72) ? (0x007F & test1 - 0x0048) : (0x007F & test1);
             tmp_link_out[0].range(bHiPhi, bLoPhi) = iphi_lut[iphi];;
        }
+
+        // Assign the algorithm outputs
+        tmp_link_out[0].range(31, 28) = layer14_out[0].range(15, 12);
+        tmp_link_out[0].range(63, 60) = layer14_out[0].range(11, 8);
+        tmp_link_out[0].range(95, 92) = layer14_out[0].range(7, 4);
+        tmp_link_out[0].range(127, 124) = layer14_out[0].range(3, 0);
 
         for(int i = 0; i < N_CH_OUT; i++){
 #pragma HLS unroll
