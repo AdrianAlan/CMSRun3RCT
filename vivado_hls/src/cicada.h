@@ -1,5 +1,5 @@
-#ifndef MYPROJECT_H_
-#define MYPROJECT_H_
+#ifndef CICADA_H_
+#define CICADA_H_
 
 #include "ap_fixed.h"
 #include "ap_int.h"
@@ -8,7 +8,7 @@
 #include "defines.h"
 
 // Prototype of top level function for C-synthesis
-void myproject(
+void cicada(
     input_t Inputs[N_INPUT_1_1],
     result_t layer6_out[N_LAYER_6]
 );

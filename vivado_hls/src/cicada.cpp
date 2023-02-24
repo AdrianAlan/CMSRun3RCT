@@ -1,9 +1,9 @@
 #include <iostream>
 
-#include "myproject.h"
+#include "cicada.h"
 #include "parameters.h"
 
-void myproject(
+void cicada(
     input_t Inputs[N_INPUT_1_1],
     result_t layer6_out[N_LAYER_6]
 ) {

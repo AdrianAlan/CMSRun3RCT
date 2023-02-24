@@ -1,5 +1,5 @@
 variable project_name
-set project_name "myproject"
+set project_name "cicada"
 variable backend
 set backend "vivado"
 variable part

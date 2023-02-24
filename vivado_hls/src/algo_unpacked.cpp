@@ -9,7 +9,7 @@
 #include <iomanip>
 #include <string>
 
-#include "myproject.h"
+#include "cicada.h"
 #include "algo_unpacked.h"
 #include "UCTSummaryCard.hpp"
 #include "PU_LUT.h"
@@ -88,7 +88,7 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<192> link_out[N_CH_OUT
         }
 
         // Anomlay detection algorithm
-        myproject(et_calo_ad, layer6_out);
+        cicada(et_calo_ad, layer6_out);
 
 ////////////////////////////////////////////////////////////
         // Objets from input
