@@ -205,7 +205,7 @@ if {$opt(cosim)} {
     set time_end [clock clicks -milliseconds]
     puts "INFO:"
     if {[string equal "$backend" "vivadoaccelerator"]} {
-        puts [read [open ${project_name}_prj/solution1/sim/report/alog_unpacked_axi_cosim.rpt r]]
+        puts [read [open ${project_name}_prj/solution1/sim/report/algo_unpacked_axi_cosim.rpt r]]
     } else {
         puts [read [open ${project_name}_prj/solution1/sim/report/algo_unpacked_cosim.rpt r]]
     }
