@@ -5,15 +5,17 @@
 #include <bitset>
 #include "superregion.h"
 
-using std::bitset;
+//using std::bitset;
 
-bitset<3> etapattern(bool activeRegion[9])
+//bitset<3> etapattern(bool activeRegion[9])
+ap_uint<3> etapattern(bool activeRegion[9])
 {
-#pragma HLS PIPELINE II=1
+//#pragma HLS PIPELINE II=1
 #pragma HLS ARRAY_RESHAPE  variable=activeRegion complete  dim=1
 #pragma HLS inline
 
-	bitset<3> rEta;
+	//bitset<3> rEta;
+	ap_uint<3> rEta = 0;
 	for(int iEta = 0; iEta < 3; iEta++){
 #pragma HLS UNROLL
 		bool activeStrip = false;
@@ -26,13 +28,15 @@ bitset<3> etapattern(bool activeRegion[9])
 	return rEta;
 }
 
-bitset<3> phipattern(bool activeRegion[9])
+//bitset<3> phipattern(bool activeRegion[9])
+ap_uint<3> phipattern(bool activeRegion[9])
 {
-#pragma HLS PIPELINE II=1
+//#pragma HLS PIPELINE II=1
 #pragma HLS ARRAY_RESHAPE  variable=activeRegion complete  dim=1
 #pragma HLS inline
 
-	bitset<3> rPhi;
+	//bitset<3> rPhi;
+	ap_uint<3> rPhi = 0;
 	for(int iPhi = 0; iPhi < 3; iPhi++){
 #pragma HLS UNROLL
 		bool activeStrip = false;
@@ -57,15 +61,20 @@ void boostedjet(ap_uint<10> jet_seed,
 	ap_uint<10> sr_et_jet[NR_SCNTR_REG];
 	ap_uint<9> sr_idx[NR_SCNTR_REG];
 	bool activeRegion[9];
-	bitset<3> b1 = 0b010;
-	bitset<3> b2 = 0b011;
-	bitset<3> b3 = 0b110;
-	bitset<3> b4 = 0b101;
-	bitset<3> b5 = 0b111;
+	//bitset<3> b1 = 0b010;
+	//bitset<3> b2 = 0b011;
+	//bitset<3> b3 = 0b110;
+	//bitset<3> b4 = 0b101;
+	//bitset<3> b5 = 0b111;
+	ap_uint<3> b1 = 2;
+	ap_uint<3> b2 = 3;
+	ap_uint<3> b3 = 6;
+	ap_uint<3> b4 = 5;
+	ap_uint<3> b5 = 7;
 
 #pragma HLS INTERFACE ap_none port=jet_seed
 
-#pragma HLS PIPELINE II=1
+//#pragma HLS PIPELINE II=1
 
 #pragma HLS ARRAY_RESHAPE  variable=regions   complete  dim=1
 #pragma HLS ARRAY_RESHAPE  variable=et_3by3   complete  dim=1
@@ -90,8 +99,10 @@ void boostedjet(ap_uint<10> jet_seed,
 
 		ap_uint<8> sidx = central_super_region_idx[idx];
 		ap_uint<10> et_j;
-		bitset<3> reta_jet;
-		bitset<3> rphi_jet;
+		//bitset<3> reta_jet;
+		//bitset<3> rphi_jet;
+		ap_uint<3> reta_jet;
+		ap_uint<3> rphi_jet;
 
 		if ((idx % 14 == 0) || ((idx + 1) % 14) == 0)
 		{

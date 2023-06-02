@@ -2,7 +2,7 @@
 
 void bitonic32Inc(din_t in1[N], din_t out1[N]){
 #pragma HLS inline
-#pragma HLS PIPELINE II=1
+//#pragma HLS PIPELINE II=1
 #pragma HLS ARRAY_RESHAPE variable=in1
 #pragma HLS ARRAY_RESHAPE variable=out1
 

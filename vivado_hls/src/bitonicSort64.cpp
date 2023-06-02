@@ -2,7 +2,7 @@
 
 void bitonicSort64(din_t in[M], din_t out[M]){
     #pragma HLS inline
-    #pragma HLS PIPELINE II=1
+    //#pragma HLS PIPELINE II=1
 
     #pragma HLS ARRAY_RESHAPE variable=in
     #pragma HLS ARRAY_RESHAPE variable=out
