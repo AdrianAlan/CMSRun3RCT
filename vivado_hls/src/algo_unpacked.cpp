@@ -222,8 +222,8 @@ void algo_unpacked(ap_uint<128> link_in[N_CH_IN], ap_uint<192> link_out[N_CH_OUT
             int bLoEta = bHiET + 1;
             int bHiEta = bLoEta + 7;
             int ieta = 0x003F & calo_coor[idx_srt].ieta + so_out_jet_boosted[idx].range(31, 26);
-            int isNegativeSide = calo_coor[idx_srt].side;
-            tmp_link_out[0].range(bHiEta, bLoEta) = ieta_lut[isNegativeSide][ieta-1];
+            ap_uint<1> isNegativeSide = calo_coor[idx_srt].side;
+            tmp_link_out[0].range(bHiEta, bLoEta) = ieta_lut[isNegativeSide][ieta];
 
             int bLoPhi = bHiEta + 1;
             int bHiPhi = bLoPhi + 7;
