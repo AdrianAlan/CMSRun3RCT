@@ -1,19 +1,20 @@
 #ifndef DEFINES_H_
 #define DEFINES_H_
 
-#include "ap_int.h"
 #include "ap_fixed.h"
+#include "ap_int.h"
 #include "nnet_utils/nnet_types.h"
 #include <cstddef>
 #include <cstdio>
 
-//hls-fpga-machine-learning insert numbers
+// hls-fpga-machine-learning insert numbers
 #define N_INPUT_1_1 252
+#define N_LAYER_2 15
+#define N_LAYER_2 15
 #define N_LAYER_2 15
 #define N_LAYER_6 1
 
-//hls-fpga-machine-learning insert layer-precision
-typedef ap_ufixed<10,10> inputs_accum_t;
+// hls-fpga-machine-learning insert layer-precision
 typedef ap_ufixed<10,10> input_t;
 typedef ap_fixed<20,18> dense1_accum_t;
 typedef ap_fixed<20,18> layer2_t;
