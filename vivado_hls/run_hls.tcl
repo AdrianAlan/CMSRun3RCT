@@ -227,7 +227,7 @@ if {$opt(validation)} {
 if {$opt(export)} {
     puts "***** EXPORT IP *****"
     set time_start [clock clicks -milliseconds]
-    export_design -format ip_catalog -display_name "HLS Algorithm IP" -description "HLS Algorithm IP" -library "hls"  -vendor "cern-cms" -version "1.0"
+    export_design -format ip_catalog -display_name "HLS Algorithm IP" -description "HLS Algorithm IP" -library "hls"  -vendor "cern-cms" -version "1.0.0"
     set time_end [clock clicks -milliseconds]
     report_time "EXPORT IP" $time_start $time_end
 }
