@@ -23,5 +23,8 @@ add_files -tb data/test1_out_ref.txt
 add_files -tb data/test2_inp.txt
 add_files -tb data/test2_out_ref.txt
 
+add_files -tb data/test3_inp.txt
+add_files -tb data/test3_out_ref.txt
+
 add_files -tb data/rnd_inp.txt
 add_files -tb data/rnd_out_ref.txt
