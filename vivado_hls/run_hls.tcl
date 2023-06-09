@@ -10,7 +10,7 @@ array set opt {
     export     0
     vsynth     0
     fifo_opt   0
-    tv test2
+    tv test3
 }
 
 set tcldir [file dirname [info script]]
