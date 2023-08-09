@@ -1,11 +1,11 @@
 #include <iostream>
 
-#include "myproject.h"
+#include "cicada.h"
 #include "parameters.h"
 
-void myproject(
-    input_t Inputs[N_INPUT_1_1],
-    result_t layer6_out[N_LAYER_6]
+void cicada(
+    input_t inputs_[N_INPUT_1_1],
+    result_t layer8_out[N_LAYER_6]
 ) {
 
     // hls-fpga-machine-learning insert IO
@@ -33,7 +33,7 @@ void myproject(
 
     layer2_t layer2_out[N_LAYER_2];
     #pragma HLS ARRAY_PARTITION variable=layer2_out complete dim=0
-    nnet::dense<input_t, layer2_t, config2>(Inputs, layer2_out, w2, b2); // dense1
+    nnet::dense<input_t, layer2_t, config2>(inputs_, layer2_out, w2, b2); // dense1
 
     layer4_t layer4_out[N_LAYER_2];
     #pragma HLS ARRAY_PARTITION variable=layer4_out complete dim=0
@@ -43,6 +43,10 @@ void myproject(
     #pragma HLS ARRAY_PARTITION variable=layer5_out complete dim=0
     nnet::relu<layer4_t, layer5_t, relu_config5>(layer4_out, layer5_out); // relu1
 
-    nnet::dense<layer5_t, result_t, config6>(layer5_out, layer6_out, w6, b6); // output
+    layer6_t layer6_out[N_LAYER_6];
+    #pragma HLS ARRAY_PARTITION variable=layer6_out complete dim=0
+    nnet::dense<layer5_t, layer6_t, config6>(layer5_out, layer6_out, w6, b6); // output
+
+    nnet::relu<layer6_t, result_t, relu_config8>(layer6_out, layer8_out); // outputs
 
 }

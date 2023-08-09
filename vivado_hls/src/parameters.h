@@ -31,8 +31,8 @@ struct config2 : nnet::dense_config {
     static const unsigned io_type = nnet::io_parallel;
     static const unsigned strategy = nnet::latency;
     static const unsigned reuse_factor = 4;
-    static const unsigned n_zeros = 1765;
-    static const unsigned n_nonzeros = 2015;
+    static const unsigned n_zeros = 1232;
+    static const unsigned n_nonzeros = 2548;
     static const unsigned multiplier_limit = DIV_ROUNDUP(n_in * n_out, reuse_factor) - n_zeros / reuse_factor;
     static const bool store_weights_in_bram = false;
     typedef dense1_accum_t accum_t;
@@ -84,6 +84,15 @@ struct config6 : nnet::dense_config {
     typedef layer6_index index_t;
     template<class x_T, class y_T>
     using product = nnet::product::mult<x_T, y_T>;
+};
+
+// outputs
+struct relu_config8 : nnet::activ_config {
+    static const unsigned n_in = 1;
+    static const unsigned table_size = 1024;
+    static const unsigned io_type = nnet::io_parallel;
+    static const unsigned reuse_factor = 1;
+    typedef outputs_table_t table_t;
 };
 
 
