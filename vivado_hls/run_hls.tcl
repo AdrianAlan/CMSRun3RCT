@@ -227,7 +227,8 @@ if {$opt(validation)} {
 if {$opt(export)} {
     puts "***** EXPORT IP *****"
     set time_start [clock clicks -milliseconds]
-    export_design -format ip_catalog -display_name "HLS Algorithm IP" -description "HLS Algorithm IP" -library "hls"  -vendor "cern-cms" -version "1.0.0"
+    config_export -format ip_catalog -rtl vhdl -use_netlist none -version 2.1.1 -vivado_optimization_level 2 -vivado_phys_opt all -vivado_report_level 0
+    export_design -flow impl -rtl vhdl -format ip_catalog -display_name "HLS Algorithm IP" -description "HLS Algorithm IP" -library "hls"  -vendor "cern-cms" -version "2.1.1"
     set time_end [clock clicks -milliseconds]
     report_time "EXPORT IP" $time_start $time_end
 }

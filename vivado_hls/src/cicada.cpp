@@ -4,12 +4,12 @@
 #include "parameters.h"
 
 void cicada(
-    input_t In[N_INPUT_1_1],
+    input_t inputs_[N_INPUT_1_1],
     result_t layer12_out[N_LAYER_10]
 ) {
 
     // hls-fpga-machine-learning insert IO
-    #pragma HLS PIPELINE II=4
+    #pragma HLS PIPELINE II=4 
 
 #ifndef __SYNTHESIS__
     static bool loaded_weights = false;
@@ -31,7 +31,7 @@ void cicada(
 
     // hls-fpga-machine-learning insert layers
 
-    auto& layer2_out = In;
+    auto& layer2_out = inputs_;
     layer3_t layer3_out[OUT_HEIGHT_3*OUT_WIDTH_3*N_FILT_3];
     #pragma HLS ARRAY_PARTITION variable=layer3_out complete dim=0
     nnet::conv_2d_cl<input_t, layer3_t, config3>(layer2_out, layer3_out, w3, b3); // conv
@@ -53,6 +53,6 @@ void cicada(
     #pragma HLS ARRAY_PARTITION variable=layer10_out complete dim=0
     nnet::dense<layer9_t, layer10_t, config10>(layer9_out, layer10_out, w10, b10); // output
 
-    nnet::relu<layer10_t, result_t, relu_config12>(layer10_out, layer12_out); // relu3
+    nnet::relu<layer10_t, result_t, relu_config12>(layer10_out, layer12_out); // outputs
 
 }

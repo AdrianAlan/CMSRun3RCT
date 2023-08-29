@@ -59,7 +59,7 @@ struct config3 : nnet::conv2d_config {
     static const unsigned n_zeros = 0;
     static const unsigned multiplier_limit =
         DIV_ROUNDUP(kernel_size * n_chan * n_filt, reuse_factor) - n_zeros / reuse_factor;
-    static const bool store_weights_in_bram = true;
+    static const bool store_weights_in_bram = false;
     static const unsigned strategy = nnet::resource;
     static const nnet::conv_implementation implementation = nnet::conv_implementation::linebuffer;
     static const unsigned min_height = 18;
@@ -85,7 +85,7 @@ struct relu_config5 : nnet::activ_config {
     static const unsigned n_in = 144;
     static const unsigned table_size = 1024;
     static const unsigned io_type = nnet::io_parallel;
-    static const unsigned reuse_factor = 4;
+    static const unsigned reuse_factor = 2;
     typedef relu1_table_t table_t;
 };
 
@@ -94,12 +94,12 @@ struct config7 : nnet::dense_config {
     static const unsigned n_in = 144;
     static const unsigned n_out = 20;
     static const unsigned io_type = nnet::io_parallel;
-    static const unsigned strategy = nnet::resource;
-    static const unsigned reuse_factor = 4;
+    static const unsigned strategy = nnet::latency;
+    static const unsigned reuse_factor = 2;
     static const unsigned n_zeros = 0;
     static const unsigned n_nonzeros = 2880;
     static const unsigned multiplier_limit = DIV_ROUNDUP(n_in * n_out, reuse_factor) - n_zeros / reuse_factor;
-    static const bool store_weights_in_bram = true;
+    static const bool store_weights_in_bram = false;
     typedef dense1_accum_t accum_t;
     typedef bias7_t bias_t;
     typedef weight7_t weight_t;
@@ -113,7 +113,7 @@ struct relu_config9 : nnet::activ_config {
     static const unsigned n_in = 20;
     static const unsigned table_size = 1024;
     static const unsigned io_type = nnet::io_parallel;
-    static const unsigned reuse_factor = 4;
+    static const unsigned reuse_factor = 2;
     typedef relu2_table_t table_t;
 };
 
@@ -122,12 +122,12 @@ struct config10 : nnet::dense_config {
     static const unsigned n_in = 20;
     static const unsigned n_out = 1;
     static const unsigned io_type = nnet::io_parallel;
-    static const unsigned strategy = nnet::resource;
-    static const unsigned reuse_factor = 4;
+    static const unsigned strategy = nnet::latency;
+    static const unsigned reuse_factor = 2;
     static const unsigned n_zeros = 0;
     static const unsigned n_nonzeros = 20;
     static const unsigned multiplier_limit = DIV_ROUNDUP(n_in * n_out, reuse_factor) - n_zeros / reuse_factor;
-    static const bool store_weights_in_bram = true;
+    static const bool store_weights_in_bram = false;
     typedef output_accum_t accum_t;
     typedef bias10_t bias_t;
     typedef weight10_t weight_t;
@@ -136,13 +136,13 @@ struct config10 : nnet::dense_config {
     using product = nnet::product::mult<x_T, y_T>;
 };
 
-// relu3
+// outputs
 struct relu_config12 : nnet::activ_config {
     static const unsigned n_in = 1;
     static const unsigned table_size = 1024;
     static const unsigned io_type = nnet::io_parallel;
-    static const unsigned reuse_factor = 4;
-    typedef relu3_table_t table_t;
+    static const unsigned reuse_factor = 2;
+    typedef outputs_table_t table_t;
 };
 
 
